@@ -2,9 +2,10 @@ import numpy
 # Here we will put the text preprocessing code that will load the data and generate the features.
 
 class PreprocessTrainingData:
-    def __init__(self, pos_dir, neg_dir):
+    def __init__(self, pos_dir, neg_dir, binary_features = True):
         self.pos_dir = pos_dir
         self.neg_dir = neg_dir
+        self.binary_features  = binary_features
 
     def numpy_feature_matrix(self):
         """
@@ -12,7 +13,7 @@ class PreprocessTrainingData:
         """
         pass
 
-    def numpy_target_vector(slef):
+    def numpy_target_vector(self):
         """
         Returns a numpy array with the true classes of the training points.
         """
