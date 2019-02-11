@@ -76,6 +76,8 @@ class ExtractFeatures:
             vector.append(review["class"])
         self.feature_matrix = numpy.array(matrix)
         self.class_vector = numpy.array(vector)
+        # return feature matrix
+        return self.feature_matrix
 
 
     def extract_binary(self):
