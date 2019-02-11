@@ -58,6 +58,7 @@ class ExtractFeatures:
             idfs[word] = math.log(len(corpus)/(doc_count +1), 10)
         with open("corpus_count.data", "w") as f:
             f.write(str(idfs))
+        self.corpus_counts = idfs
         return idfs
 
 
