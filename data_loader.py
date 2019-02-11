@@ -67,8 +67,6 @@ class ExtractFeatures:
         vector = []
         for review in self.data:
             features = []
-            # Bias term
-            features.append(1)
             # Add word counts in the order they are in the list
             for word in self.word_list:
                 features.append(review["review"].count(word))
@@ -91,12 +89,9 @@ class ExtractFeatures:
         matrix = []
         for example in self.feature_matrix:
             tfidf_features = []
-            # Add bias term
-            tfidf_features.append(1)
             # Keep track of word identity by position in matrix
             i = 0
-            # Omit bias term
-            for entry in example[1:]:
+            for entry in example:
                 tfidf_features.append(entry*self.corpus_counts[self.word_list[i]])
                 i = i + 1
             matrix.append(tfidf_features)
@@ -127,12 +122,14 @@ class LoadTrainingData:
         # Preprocess again if it does not exist
         else:
             # Read each example in the negative training directory.
+            print("Loading negatives")
             for txt_name in os.listdir(neg_dir):
                 with open(os.path.join(neg_dir, txt_name)) as f:
                     text = f.read()
                     self.data.append(text_processor.process_text(txt_name, text, 0))
 
             # # Read each example in the positive training directory.
+            print("Loading positives")
             for txt_name in os.listdir(pos_dir):
                 with open(os.path.join(pos_dir, txt_name)) as f:
                     text = f.read()
@@ -147,6 +144,7 @@ class LoadTrainingData:
             with open("word_freqs.data") as freqs:
                 self.words_freq = eval(freqs.read())
         else:
+            print("Computing word frequencies")
             # Compute word frequencies
             all_words = []
             for review in self.data:
