@@ -1,3 +1,4 @@
+import math
 import numpy
 import nltk
 from nltk.corpus import stopwords
@@ -38,6 +39,28 @@ class ExtractFeatures:
         self.feature_matrix = None
         self.class_vector = None
 
+        # Extract raw count features
+        self.extract_counts()
+        # Load precomputed IDFs
+        try:
+            with open("corpus_count.data", "r") as f:
+                self.corpus_counts = eval(f.read())
+        except:
+            print("Compute idfs!")
+
+    def compute_idfs(self, corpus):
+        idfs = {}
+        for word in self.word_list:
+            doc_count = 0
+            for review in corpus:
+                if word in review['review']:
+                    doc_count = doc_count + 1
+            idfs[word] = math.log(len(corpus)/(doc_count +1), 10)
+        with open("corpus_count.data", "w") as f:
+            f.write(str(idfs))
+        return idfs
+
+
     def extract_counts(self):
         matrix = []
         vector = []
@@ -55,7 +78,7 @@ class ExtractFeatures:
 
     def extract_binary(self):
         matrix = []
-        for example in self.feature_matrix[0:-1]:
+        for example in self.feature_matrix:
             binary_features = []
             for entry in example:
                 if entry > 0: binary_features.append(1)
@@ -63,8 +86,29 @@ class ExtractFeatures:
             matrix.append(binary_features)
         return numpy.array(matrix)
 
-    def exract_tfidf(self):
-        pass
+    def extract_tfidf(self):
+        matrix = []
+        for example in self.feature_matrix:
+            tfidf_features = []
+            # Add bias term
+            tfidf_features.append(1)
+            # Keep track of word identity by position in matrix
+            i = 0
+            # Omit bias term
+            for entry in example[1:]:
+                tfidf_features.append(entry*self.corpus_counts[self.word_list[i]])
+                i = i + 1
+            matrix.append(tfidf_features)
+        return numpy.array(matrix)
+
+    def partition(self, matrix):
+        """
+        Partitions the given data set into 10 subsets.
+        """
+        sets = []
+        for start in range(0, 10):
+            sets.append(matrix[start:start+2500])
+        return sets
 
 class LoadTrainingData:
     def __init__(self, pos_dir, neg_dir):
@@ -74,30 +118,45 @@ class LoadTrainingData:
         text_processor = ProcessText()
         self.data = []
 
-        # Read each example in the negative training directory.
-        # for txt_name in os.listdir(neg_dir):
-        #     with open(os.path.join(neg_dir, txt_name)) as f:
-        #         text = f.read()
-        #         self.data.append(text_processor.process_text(txt_name, text, 0))
 
-        # # Read each example in the positive training directory.
-        # for txt_name in os.listdir(pos_dir):
-        #     with open(os.path.join(pos_dir, txt_name)) as f:
-        #         text = f.read()
-        #         self.data.append(text_processor.process_text(txt_name, text, 1))
+        # Load preprocessed training data if it exists
+        if os.path.exists("training_data.data"):
+            with open("training_data.data") as f:
+                self.data = eval(f.read())
+        # Preprocess again if it does not exist
+        else:
+            # Read each example in the negative training directory.
+            for txt_name in os.listdir(neg_dir):
+                with open(os.path.join(neg_dir, txt_name)) as f:
+                    text = f.read()
+                    self.data.append(text_processor.process_text(txt_name, text, 0))
 
-        # Or load preprocessed training data
+            # # Read each example in the positive training directory.
+            for txt_name in os.listdir(pos_dir):
+                with open(os.path.join(pos_dir, txt_name)) as f:
+                    text = f.read()
+                    self.data.append(text_processor.process_text(txt_name, text, 1))
 
-        with open("training_data.data") as f:
-            self.data = eval(f.read())
+            with open("training_data.data") as f:
+                f.write(str(self.data))
 
-        # This is long to compute. We must save this to a file.
-        # all_words = []
-        # for review in self.data:
-        #     all_words = all_words + review["review"]
 
-        with open("word_freqs.data") as freqs:
-            self.words_freq = eval(freqs.read())
+        # Load precomputed if it exists
+        if os.path.exists("word_freqs.data"):
+            with open("word_freqs.data") as freqs:
+                self.words_freq = eval(freqs.read())
+        else:
+            # Compute word frequencies
+            all_words = []
+            for review in self.data:
+                all_words = all_words + review["review"]
+            self.words_freq = FreqDist(all_words)
+            # This is long to compute. We must save this to a file.
+            with open("word_freqs.data") as f:
+                f.write(str(self.words_freq))
+
+
+
 
 class LoadTestingData:
     def __init__(self, testing_dir):
