@@ -20,11 +20,13 @@ class ProcessText:
     def __init__(self):
         self._lematizer = nltk.WordNetLemmatizer()
 
+
     def process_text(self, txt_name, text, clss = None):
         # Here, we remove stop words
         word_list = [self._lematizer.lemmatize(word) for word in nltk.word_tokenize(text)
                      if word.lower() not in stopwords.words('english')]
         return {"ex": txt_name, "review": word_list, "class" : clss}
+
 
 class ExtractFeatures:
     def __init__(self, data, word_list):
@@ -32,7 +34,6 @@ class ExtractFeatures:
         data: list of reviews to extract features from
         word_list: words to be used as features in the classification
         """
-
         # Words for which to collect features
         self.word_list = word_list
         self.data = data
@@ -47,6 +48,7 @@ class ExtractFeatures:
                 self.corpus_counts = eval(f.read())
         except:
             print("Compute idfs!")
+
 
     def compute_idfs(self, corpus):
         idfs = {}
@@ -75,6 +77,7 @@ class ExtractFeatures:
         self.feature_matrix = numpy.array(matrix)
         self.class_vector = numpy.array(vector)
 
+
     def extract_binary(self):
         matrix = []
         for example in self.feature_matrix:
@@ -84,6 +87,7 @@ class ExtractFeatures:
                 else: binary_features.append(0)
             matrix.append(binary_features)
         return numpy.array(matrix)
+
 
     def extract_tfidf(self):
         matrix = []
@@ -97,6 +101,7 @@ class ExtractFeatures:
             matrix.append(tfidf_features)
         return numpy.array(matrix)
 
+
     def partition(self, matrix):
         """
         Partitions the given data set into 10 subsets.
@@ -106,6 +111,7 @@ class ExtractFeatures:
             sets.append(matrix[start:start+2500])
         return sets
 
+
 class LoadTrainingData:
     def __init__(self, pos_dir, neg_dir):
         self.pos_dir = pos_dir
@@ -113,7 +119,6 @@ class LoadTrainingData:
 
         text_processor = ProcessText()
         self.data = []
-
 
         # Load preprocessed training data if it exists
         if os.path.exists("training_data.data"):
@@ -135,9 +140,8 @@ class LoadTrainingData:
                     text = f.read()
                     self.data.append(text_processor.process_text(txt_name, text, 1))
 
-            with open("training_data.data") as f:
+            with open("training_data.data", "w") as f:
                 f.write(str(self.data))
-
 
         # Load precomputed if it exists
         if os.path.exists("word_freqs.data"):
@@ -151,10 +155,8 @@ class LoadTrainingData:
                 all_words = all_words + review["review"]
             self.words_freq = FreqDist(all_words)
             # This is long to compute. We must save this to a file.
-            with open("word_freqs.data") as f:
+            with open("word_freqs.data", "w") as f:
                 f.write(str(self.words_freq))
-
-
 
 
 class LoadTestingData:
@@ -166,7 +168,6 @@ class LoadTestingData:
             with open(os.path.join(testing_dir, txt_name)) as f:
                 text = f.read()
                 self.data.append(text_processor.process_text(txt_name, text, None))
-
 
 # Example of use
 if __name__ == "__main__":
