@@ -27,10 +27,43 @@ class ProcessText:
 
 class ExtractFeatures:
     def __init__(self, data, word_list):
-        pass
-    def extract_binary():
-        pass
-    def exract_tfidf():
+        """
+        data: list of reviews to extract features from
+        word_list: words to be used as features in the classification
+        """
+
+        # Words for which to collect features
+        self.word_list = word_list
+        self.data = data
+        self.feature_matrix = None
+        self.class_vector = None
+
+    def extract_counts(self):
+        matrix = []
+        vector = []
+        for review in self.data:
+            features = []
+            # Bias term
+            features.append(1)
+            # Add word counts in the order they are in the list
+            for word in self.word_list:
+                features.append(review["review"].count(word))
+            matrix.append(features)
+            vector.append(review["class"])
+        self.feature_matrix = numpy.array(matrix)
+        self.class_vector = numpy.array(vector)
+
+    def extract_binary(self):
+        matrix = []
+        for example in self.feature_matrix[0:-1]:
+            binary_features = []
+            for entry in example:
+                if entry > 0: binary_features.append(1)
+                else: binary_features.append(0)
+            matrix.append(binary_features)
+        return numpy.array(matrix)
+
+    def exract_tfidf(self):
         pass
 
 class LoadTrainingData:
