@@ -159,7 +159,7 @@ class LoadTrainingData:
             self.words_freq = FreqDist(all_words)
             # This is long to compute. We must save this to a file.
             with open("word_freqs.data", "w") as f:
-                f.write(str(self.words_freq))
+                self.words_freq.pprint(100000000, f)
 
 
 class LoadTestingData:
