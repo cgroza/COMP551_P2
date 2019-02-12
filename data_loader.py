@@ -115,7 +115,9 @@ class ExtractFeatures:
         partitions = []
         for start in range(0, 10):
             # add a matrix (feature), vector (labels) to the partition list
-            partitions.append((matrix[start:start+2500], vector[start:start+2500]))
+            begin = 2500*start
+            end = 2500*start + 2500
+            partitions.append((matrix[start:end], vector[start:end]))
         return partitions
 
 
