@@ -4,6 +4,8 @@ import numpy
 import nltk
 from nltk.corpus import stopwords
 from nltk.probability import FreqDist
+from sklearn.utils import shuffle
+
 # Here we will put the text preprocessing code that will load the data and generate the features.
 
 # Citation for Lexicon 1
@@ -77,6 +79,7 @@ class ExtractFeatures:
             vector.append(review["class"])
         self.feature_matrix = numpy.array(matrix)
         self.class_vector = numpy.array(vector)
+        (self.feature_matrix, self.class_vector) = shuffle(self.feature_matrix, self.class_vector, random_state = 0)
         # return feature matrix
         return self.feature_matrix
 
@@ -105,14 +108,15 @@ class ExtractFeatures:
         return numpy.array(matrix)
 
 
-    def partition(self, matrix):
+    def partition(self, matrix, vector):
         """
         Partitions the given data set into 10 subsets.
         """
-        sets = []
+        partitions = []
         for start in range(0, 10):
-            sets.append(matrix[start:start+2500])
-        return sets
+            # add a matrix (feature), vector (labels) to the partition list
+            partitions.append((matrix[start:start+2500], vector[start:start+2500]))
+        return partitions
 
 
 class LoadTrainingData:

@@ -33,4 +33,4 @@ def get_training_words():
     with open("negative_train_words.data", "w") as f:
         f.write(str(negative_train_words))
 
-    return (positive_train_words, negative_train_words)
+    return (positive_train_words + negative_train_words, positive_train_words, negative_train_words)
