@@ -13,9 +13,9 @@ def compute_binary_training_matrix():
         feature_extractor = data_loader.ExtractFeatures(training_data.data, total)
         # partition into 10 sets
         binary_feature = feature_extractor.extract_binary()
-        numpy.save("training_matrix.npy", binary_feature)
+        numpy.save("binary_training_matrix.npy", binary_feature)
         class_vector = feature_extractor.class_vector
-        numpy.save("class_vector.npy", class_vector)
+        numpy.save("binary_class_vector.npy", class_vector)
     else:
         binary_feature = numpy.load("binary_training_matrix.npy")
         class_vector = numpy.load("binary_class_vector.npy")
@@ -34,9 +34,9 @@ def compute_tfidf_training_matrix():
         class_vector = feature_extractor.class_vector
         numpy.save("tfidf_class_vector.npy", class_vector)
     else:
-        binary_feature = numpy.load("tfidf_training_matrix.npy")
+        tfidf_feature = numpy.load("tfidf_training_matrix.npy")
         class_vector = numpy.load("tfidf_class_vector.npy")
-    return (binary_feature, class_vector)
+    return (tfidf_feature, class_vector)
 
 def k_fold_validate(feature_matrix, target_vector, Model):
     data_partitions = data_loader.ExtractFeatures.partition(feature_matrix, target_vector)
@@ -69,5 +69,5 @@ def k_fold_validate(feature_matrix, target_vector, Model):
         print(actual)
         accuracies.append(metrics.accuracy_score(actual, predicted))
 
-    print("Average accuracy of logistic regression with binary features:")
+    print("Average accuracy:")
     print(sum(accuracies)/len(accuracies))
