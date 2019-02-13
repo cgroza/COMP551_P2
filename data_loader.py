@@ -108,7 +108,7 @@ class ExtractFeatures:
         return numpy.array(matrix)
 
 
-    def partition(self, matrix, vector):
+    def partition(matrix, vector):
         """
         Partitions the given data set into 10 subsets.
         """
