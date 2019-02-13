@@ -82,6 +82,7 @@ class ExtractFeatures:
         self.feature_matrix = numpy.array(matrix)
         self.class_vector = numpy.array(vector)
         if self.shuffle:
+            print("Shuffling")
             (self.feature_matrix, self.class_vector) = shuffle(self.feature_matrix, self.class_vector, random_state = 0)
         # return feature matrix
         return self.feature_matrix
