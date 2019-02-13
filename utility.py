@@ -2,6 +2,7 @@ import word_features
 import data_loader
 import numpy
 import os
+import sklearn.metrics as metrics
 
 def compute_binary_training_matrix():
     if not os.path.exists("binary_training_matrix.npy"):

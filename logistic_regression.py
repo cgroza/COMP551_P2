@@ -1,6 +1,5 @@
 import numpy
 import sklearn.linear_model as models
-import sklearn.metrics as metrics
 import utility
 
 # save memory
