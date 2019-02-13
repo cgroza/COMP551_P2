@@ -32,11 +32,13 @@ class ProcessText:
 
 
 class ExtractFeatures:
-    def __init__(self, data, word_list):
+    def __init__(self, data, word_list, shuffle = True):
         """
         data: list of reviews to extract features from
         word_list: words to be used as features in the classification
         """
+        # We only want to shuffle the training set
+        self.shuffle = shuffle
         # Words for which to collect features
         self.word_list = word_list
         self.data = data
@@ -79,7 +81,8 @@ class ExtractFeatures:
             vector.append(review["class"])
         self.feature_matrix = numpy.array(matrix)
         self.class_vector = numpy.array(vector)
-        (self.feature_matrix, self.class_vector) = shuffle(self.feature_matrix, self.class_vector, random_state = 0)
+        if self.shuffle:
+            (self.feature_matrix, self.class_vector) = shuffle(self.feature_matrix, self.class_vector, random_state = 0)
         # return feature matrix
         return self.feature_matrix
 
@@ -172,11 +175,17 @@ class LoadTestingData:
     def __init__(self, testing_dir):
         self.testing_dir = testing_dir
         self.data = []
-
-        for txt_name in os.listdir(testing_dir):
-            with open(os.path.join(testing_dir, txt_name)) as f:
-                text = f.read()
-                self.data.append(text_processor.process_text(txt_name, text, None))
+        if os.path.exists("testing_data.data"):
+            with open("testing_data.data") as f:
+                self.data = eval(f.read())
+        else:
+            text_processor = ProcessText()
+            for txt_name in os.listdir(testing_dir):
+                with open(os.path.join(testing_dir, txt_name)) as f:
+                    text = f.read()
+                    self.data.append(text_processor.process_text(txt_name, text, None))
+            with open("testing_data.data", "w") as f:
+                f.write(str(self.data))
 
 # Example of use
 if __name__ == "__main__":
