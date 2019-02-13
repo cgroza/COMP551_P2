@@ -14,4 +14,4 @@ def train_final_model():
 (train_data, target) = utility.compute_binary_training_matrix()
 
 # k-fold-validate LogisticRegression with binary features
-k_fold_validate(train_data, target, models.LogisticRegression)
+utility.k_fold_validate(train_data, target, models.LogisticRegression)
