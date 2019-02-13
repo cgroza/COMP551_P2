@@ -30,7 +30,7 @@ def compute_tfidf_training_matrix():
         feature_extractor = data_loader.ExtractFeatures(training_data.data, total)
         # partition into 10 sets
         tfidf_feature = feature_extractor.extract_tfidf()
-        numpy.save("tfidf_training_matrix.npy", binary_feature)
+        numpy.save("tfidf_training_matrix.npy", tfidf_feature)
         class_vector = feature_extractor.class_vector
         numpy.save("tfidf_class_vector.npy", class_vector)
     else:
