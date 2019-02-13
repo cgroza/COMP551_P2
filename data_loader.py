@@ -50,7 +50,7 @@ class ExtractFeatures:
             with open("corpus_count.data", "r") as f:
                 self.corpus_counts = eval(f.read())
         except:
-            print("Compute idfs!")
+                self.corpus_counts = self.compute_idfs(data)
 
 
     def compute_idfs(self, corpus):
