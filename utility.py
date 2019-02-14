@@ -71,3 +71,24 @@ def k_fold_validate(feature_matrix, target_vector, Model):
 
     print("Average accuracy:")
     print(sum(accuracies)/len(accuracies))
+
+def predict_testing(training_matrix, training_target, out, Model):
+    """
+    Trains a model with the full training set and predicts the testing set
+    """
+    final_model = Model(max_iter = 10000).fit(training_matrix, training_target)
+
+    testing_data = data_loader.LoadTestingData("test")
+    if os.path.exists("testing_matrix.npy"):
+        testing_matrix = numpy.load("testing_matrix.npy")
+    else:
+        (total, pos, neg) = word_features.get_training_words()
+        feature_extractor = data_loader.ExtractFeatures(testing_data.data, total, shuffle = False)
+        testing_matrix = feature_extractor.extract_tfidf()
+        numpy.save("testing_matrix.npy", testing_matrix)
+
+    predicted_testing = final_model.predict(testing_matrix)
+    with open(out, "w") as f:
+        f.write("Id,Category\n")
+        for i in range(len(predicted_testing)):
+            f.write(testing_data.data[i]["ex"].replace(".txt", "") + "," + str(predicted_testing[i]) + "\n")

@@ -7,3 +7,4 @@ print("Loading tfidf matrix")
 # k-fold-validate LogisticRegression with tfidf features
 utility.k_fold_validate(tfidf_train_data, tfidf_target, svm.LinearSVC)
 
+utility.predict_testing(tfidf_train_data, tfidf_target, "svm_pred.csv", svm.LinearSVC)
