@@ -2,6 +2,7 @@ import io
 import time
 
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.model_selection import KFold
 from sklearn import model_selection
 from sklearn import svm
@@ -56,17 +57,23 @@ trainLabels = [1]*len(pos) + [0]*len(neg)
 #Tutorial code helped: https://colab.research.google.com/drive/1LQuuM9oNuQhX16jyMoD2ekkIvJ4nefHd#scrollTo=LZ4ftpnjRbUP
 
 
+tfidf_pipeline = True
+# Put the feature matrix in the *_matrix variables
+# tfidf pipeline
+if tfidf_pipeline:
+    count_vect = CountVectorizer(binary = False,ngram_range=(1, 1)).fit(trainData);
+    X_train_counts = count_vect.transform(trainData)
+    X_test_counts = count_vect.transform(test)
 
-#cv = CountVectorizer();
-count_vect = CountVectorizer(binary = False,ngram_range=(1, 1)).fit(trainData);
-X_train_counts = count_vect.transform(trainData)
-X_test_counts = count_vect.transform(test)
 
-
-tfidf_transformer = TfidfTransformer().fit(X_train_counts)
-X_train_tfidf = tfidf_transformer.transform(X_train_counts)
-X_test_tfidf = tfidf_transformer.transform(X_test_counts)
-
+    tfidf_transformer = TfidfTransformer().fit(X_train_counts)
+    X_train_matrix = tfidf_transformer.transform(X_train_counts)
+    X_test_matrix = tfidf_transformer.transform(X_test_counts)
+# binary occurrences pipeline
+if not tfidf_pipeline:
+    count_vect = CountVectorizer(binary = True,ngram_range=(1, 1)).fit(trainData);
+    X_train_matrix = count_vect.transform(trainData)
+    X_test_matrix = count_vect.transform(test)
 
 #setup the crossvalidation
 kf = KFold(n_splits=5, shuffle = True, random_state = random_seed);
@@ -74,32 +81,34 @@ kf = KFold(n_splits=5, shuffle = True, random_state = random_seed);
 #choose model
 #NOTE: SVM is slow
 
-model = linear_model.LogisticRegression()
 #model = MultinomialNB()
 
 print("Try LogisticRegression with tfidf")
+log_model = linear_model.LogisticRegression()
 #perform cross validation, see accuracy on each fold and average accuracy
-accuracy = model_selection.cross_val_score(model, X_train_tfidf, trainLabels, cv=kf)
-print(accuracy)
-print(accuracy.mean())
+log_accuracy = model_selection.cross_val_score(log_model, X_train_matrix, trainLabels, cv=kf)
+print(log_accuracy)
+print(log_accuracy.mean())
 
 
 print("Try SVM with tfidf")
 # Do cross validation on the SVM with tfidf
 svm_model = svm.SVC(kernel='linear')
-svm_accuracy = model_selection.cross_val_score(svm_model, X_train_tfidf, trainLabels, cv=kf)
+svm_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
 print(svm_accuracy)
 print(svm_accuracy.mean())
 
 
 print("Try DecisionTree with tfidf")
 tree_model = DecisionTreeClassifier()
-tree_accuracy = model_selection.cross_val_score(svm_model, X_train_tfidf, trainLabels, cv=kf)
+tree_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
 print(tree_accuracy)
 print(tree_accuracy.mean())
 #Set to true if you want to produce a submission csv
 csv = True
 
+# set the model to be used for submission
+model = svm_model
 #CODE FOR BUILDING SUBMISSION
 
 if csv:
@@ -107,9 +116,9 @@ if csv:
     submissionFile = open('submission.csv','w')
 
     #build model on full training data
-    pred = model.fit(X_train_tfidf, trainLabels)
+    pred = model.fit(X_train_matrix, trainLabels)
     #use model to predict test data
-    y_pred = pred.predict(X_test_tfidf)
+    y_pred = pred.predict(X_test_matrix)
 
     #predictions array
     print(y_pred)
