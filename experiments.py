@@ -1,6 +1,9 @@
 import io
 import time
+import numpy
+import nltk
 
+from sklearn.linear_model import SGDClassifier 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.model_selection import KFold
@@ -72,8 +75,13 @@ trainLabels = [1]*len(pos) + [0]*len(neg)
 #Tutorial code helped: https://colab.research.google.com/drive/1LQuuM9oNuQhX16jyMoD2ekkIvJ4nefHd#scrollTo=LZ4ftpnjRbUP
 
 
-# Put the feature matrix in the *_matrix variables
-# tfidf pipeline
+lematizer = nltk.WordNetLemmatizer()
+with open("opinion-lexicon-English/positive-words.txt") as pos_f:
+    positive_words = set([lematizer.lemmatize(pos_word) for pos_word in pos_f.read().split()])
+
+with open("opinion-lexicon-English/negative-words.txt") as neg_f:
+    negative_words = set([lematizer.lemmatize(neg_word) for neg_word in neg_f.read().split()])
+
 if tfidf_pipeline:
     count_vect = CountVectorizer(binary = False,ngram_range=(1, 1)).fit(trainData);
     X_train_counts = count_vect.transform(trainData)
@@ -83,9 +91,18 @@ if tfidf_pipeline:
     tfidf_transformer = TfidfTransformer().fit(X_train_counts)
     X_train_matrix = tfidf_transformer.transform(X_train_counts)
     X_test_matrix = tfidf_transformer.transform(X_test_counts)
+
+    # transform features
+    # ordered_features = count_vect.get_feature_names()
+    # for i in range(len(ordered_features)):
+    #     if ordered_features[i] in positive_words:
+    #         X_train_matrix[:, i] =  X_train_matrix[:, i].power(2)
+    #     elif ordered_features[i] in negative_words:
+    #         X_train_matrix[:, i] = (-1) * X_train_matrix[:, i].power(2)
+
 # binary occurrences pipeline
 if not tfidf_pipeline:
-    count_vect = CountVectorizer(binary = True,ngram_range=(1, 1)).fit(trainData);
+    count_vect = CountVectorizer(binary=True, ngram_range=(1, 2)).fit(trainData);
     X_train_matrix = count_vect.transform(trainData)
     X_test_matrix = count_vect.transform(test)
 

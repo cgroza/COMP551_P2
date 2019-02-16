@@ -2,14 +2,14 @@ import os
 import re
 import string
 import glob
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-
 #list of stop words
 stop_words = set(stopwords.words('english'))
 
 #Boolean to keep or remove stop words
-removeStopWords = False
+removeStopWords = True
 
 #Boolean to determine whether we are just making a sample file
 #Only set to true if you want to check that your code/file is building properly
@@ -22,6 +22,8 @@ file = open('data_withstopwords.pos','w')
 #helps estimate how many files have been processed
 index = 0
 
+# we need to lematize the words
+lematizer = nltk.WordNetLemmatizer()
 #iterate through directory
 #either 'train/pos' or 'train/neg' or 'test'
 for filename in glob.glob(os.path.join('test', '*.txt')):
@@ -51,7 +53,7 @@ for filename in glob.glob(os.path.join('test', '*.txt')):
 		if removeStopWords:
 			#tokenize line
 			raw_words = word_tokenize(lineLower)
-			words = [w.lower() for w in raw_words if w.isalpha() and w not in stop_words]
+			words = [lematizer.lemmatize(w.lower()) for w in raw_words if w.isalpha() and w not in stop_words]
 			#print(words)
 			text =  " ".join(words);
 
