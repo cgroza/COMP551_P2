@@ -13,6 +13,21 @@ from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.preprocessing import Normalizer
 
+ ############################################################
+ # SCRIPT PARAMETERS                                        #
+ # Toggle these flags to change the behaviour of the script #
+ ############################################################
+
+# For reproducible purposes
+# Set to true if you want to produce a submission csv
+csv = True
+# Toggle between  tfidf features, or binary features
+tfidf_pipeline = False
+# Toggle generating cross validation results
+crossvalidate = True
+# Set the model to be used for submission
+model = svm.SVC(kernel='linear')
+
 #to ensure the same splits in cross validation
 random_seed = 7
 
@@ -57,7 +72,6 @@ trainLabels = [1]*len(pos) + [0]*len(neg)
 #Tutorial code helped: https://colab.research.google.com/drive/1LQuuM9oNuQhX16jyMoD2ekkIvJ4nefHd#scrollTo=LZ4ftpnjRbUP
 
 
-tfidf_pipeline = True
 # Put the feature matrix in the *_matrix variables
 # tfidf pipeline
 if tfidf_pipeline:
@@ -76,39 +90,32 @@ if not tfidf_pipeline:
     X_test_matrix = count_vect.transform(test)
 
 #setup the crossvalidation
-kf = KFold(n_splits=5, shuffle = True, random_state = random_seed);
-
-#choose model
-#NOTE: SVM is slow
 
 #model = MultinomialNB()
-
-print("Try LogisticRegression with tfidf")
-log_model = linear_model.LogisticRegression()
-#perform cross validation, see accuracy on each fold and average accuracy
-log_accuracy = model_selection.cross_val_score(log_model, X_train_matrix, trainLabels, cv=kf)
-print(log_accuracy)
-print(log_accuracy.mean())
-
-
-print("Try SVM with tfidf")
-# Do cross validation on the SVM with tfidf
-svm_model = svm.SVC(kernel='linear')
-svm_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
-print(svm_accuracy)
-print(svm_accuracy.mean())
+if crossvalidate:
+    kf = KFold(n_splits=5, shuffle = True, random_state = random_seed);
+    print("Try LogisticRegression with tfidf")
+    log_model = linear_model.LogisticRegression()
+    #perform cross validation, see accuracy on each fold and average accuracy
+    log_accuracy = model_selection.cross_val_score(log_model, X_train_matrix, trainLabels, cv=kf)
+    print(log_accuracy)
+    print(log_accuracy.mean())
 
 
-print("Try DecisionTree with tfidf")
-tree_model = DecisionTreeClassifier()
-tree_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
-print(tree_accuracy)
-print(tree_accuracy.mean())
-#Set to true if you want to produce a submission csv
-csv = True
+    print("Try SVM with tfidf")
+    # Do cross validation on the SVM with tfidf
+    svm_model = svm.SVC(kernel='linear')
+    svm_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
+    print(svm_accuracy)
+    print(svm_accuracy.mean())
 
-# set the model to be used for submission
-model = svm_model
+
+    print("Try DecisionTree with tfidf")
+    tree_model = DecisionTreeClassifier()
+    tree_accuracy = model_selection.cross_val_score(svm_model, X_train_matrix, trainLabels, cv=kf)
+    print(tree_accuracy)
+    print(tree_accuracy.mean())
+
 #CODE FOR BUILDING SUBMISSION
 
 if csv:
