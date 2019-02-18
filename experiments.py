@@ -1,6 +1,7 @@
 import io
 import time
 import numpy
+import scipy
 import nltk
 
 from sklearn.linear_model import SGDClassifier 
@@ -25,7 +26,7 @@ from sklearn.preprocessing import Normalizer
 # Set to true if you want to produce a submission csv
 csv = True
 # Toggle between  tfidf features, or binary features
-tfidf_pipeline = False
+tfidf_pipeline = True
 # Toggle generating cross validation results
 crossvalidate = True
 # Set the model to be used for submission
@@ -76,29 +77,34 @@ trainLabels = [1]*len(pos) + [0]*len(neg)
 
 
 lematizer = nltk.WordNetLemmatizer()
-with open("opinion-lexicon-English/positive-words.txt") as pos_f:
-    positive_words = set([lematizer.lemmatize(pos_word) for pos_word in pos_f.read().split()])
+with open("VAD_lexicon.csv") as f:
+    f.readline()
+    entries = {}
+    for line in f:
+        (word, v, a, d) = line.split(",")
+        entries[lematizer.lemmatize(word)] = (float(v),float(a),float(d))
 
-with open("opinion-lexicon-English/negative-words.txt") as neg_f:
-    negative_words = set([lematizer.lemmatize(neg_word) for neg_word in neg_f.read().split()])
+with open("opinion-lexicon-English/negative-words.txt") as f:
+    neg_opinion = set(f.read().split())
+with open("opinion-lexicon-English/positive-words.txt") as f:
+    pos_opinion = set(f.read().split())
+
+
+with open("connot_negative.txt") as f:
+    neg_conot = set(f.read().split())
+with open("connot_positive.txt") as f:
+    pos_conot = set(f.read().split())
+
 
 if tfidf_pipeline:
     count_vect = CountVectorizer(binary = False,ngram_range=(1, 1)).fit(trainData);
     X_train_counts = count_vect.transform(trainData)
     X_test_counts = count_vect.transform(test)
 
-
     tfidf_transformer = TfidfTransformer().fit(X_train_counts)
     X_train_matrix = tfidf_transformer.transform(X_train_counts)
     X_test_matrix = tfidf_transformer.transform(X_test_counts)
 
-    # transform features
-    # ordered_features = count_vect.get_feature_names()
-    # for i in range(len(ordered_features)):
-    #     if ordered_features[i] in positive_words:
-    #         X_train_matrix[:, i] =  X_train_matrix[:, i].power(2)
-    #     elif ordered_features[i] in negative_words:
-    #         X_train_matrix[:, i] = (-1) * X_train_matrix[:, i].power(2)
 
 # binary occurrences pipeline
 if not tfidf_pipeline:
@@ -106,13 +112,64 @@ if not tfidf_pipeline:
     X_train_matrix = count_vect.transform(trainData)
     X_test_matrix = count_vect.transform(test)
 
+def compute_counts(data):
+    new_features = []
+    feature_set = count_vect.get_feature_names()
+    for d in data:
+        words = set(d.split())
+        pos_opinion_count = len(words.intersection(pos_opinion))
+        neg_opinion_count = len(words.intersection(neg_opinion))
+        pos_conot_count =  len(words.intersection(pos_conot))
+        neg_conot_count =  len(words.intersection(neg_conot))
+        new_features.append([pos_opinion_count, neg_opinion_count,
+                             pos_conot_count, neg_conot_count,
+                             pos_opinion_count * pos_conot_count,
+                             neg_opinion_count * neg_conot_count,
+        ])
+    return new_features
+
+# transform features
+# We are trying to get a weighted average by tfidf of valence, arousal, and dominance.
+def compute_average_vad(matrix, count_vect):
+    ordered_features = count_vect.get_feature_names()
+    new_features = []
+    for i in range(matrix.shape[0]):
+        if(i%1000) == 0: print(i)
+        (v, a, d) = (0, 0, 0)
+        count = 0
+        for j in range(len(ordered_features)):
+            word = ordered_features[j]
+            if word in entries:
+                (v_, a_, d_) = entries[word]
+                (v, a, d) = (v +  v_, a +  a_, d +  d_)
+                count = count + 1
+
+        new_features.append([v/count, a/count, d/count])
+    return new_features
+
+# train_new_features = numpy.load("train_vad.npy")
+# test_new_features  = numpy.load("test_vad.npy")
+train_vad_features = scipy.sparse.csr_matrix(compute_average_vad(X_train_matrix, count_vect))
+test_vad_features  = scipy.sparse.csr_matrix(compute_average_vad(X_test_matrix, count_vect))
+
+train_count_features = scipy.sparse.csr_matrix(compute_counts(trainData))
+test_count_features = scipy.sparse.csr_matrix(compute_counts(test))
+
+numpy.save("train_vad.npy", train_vad_features)
+numpy.save("test_vad.npy", test_vad_features)
+
+numpy.save("train_count.npy", train_count_features)
+numpy.save("test_count.npy", test_count_features)
+
+X_train_matrix = scipy.sparse.hstack([train_count_features, X_train_matrix])
+X_test_matrix = scipy.sparse.hstack([test_count_features, X_test_matrix])
 #setup the crossvalidation
 
 #model = MultinomialNB()
 if crossvalidate:
     kf = KFold(n_splits=5, shuffle = True, random_state = random_seed);
     print("Try LogisticRegression with tfidf")
-    log_model = linear_model.LogisticRegression()
+    log_model = linear_model.LogisticRegression(penalty = 'l2')
     #perform cross validation, see accuracy on each fold and average accuracy
     log_accuracy = model_selection.cross_val_score(log_model, X_train_matrix, trainLabels, cv=kf)
     print(log_accuracy)
